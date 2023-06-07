@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import Description from './components/Description';
-import { QueryClient, useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 import axios from 'axios';
 
@@ -9,8 +9,7 @@ import * as d3 from 'd3';
 import Navbar from './components/Navbar';
 import ModalComponent from './components/ModalComponent';
 import AddTechnologyModal from './components/AddTechnologyModal';
-
-const queryClient = new QueryClient();
+import WarningDialog from './components/WarningDialog';
 
 function useGetAllEntries() {
   return useQuery(
@@ -61,6 +60,7 @@ function App() {
   const [quadrant, setQuadrant] = useState(null);
   const [ring, setRing] = useState(null);
   const [myBlips, setBlips] = useState([]);
+  const [zoomed_quadrant, setZoomedQuadrant] = useState(null);
 
   const handleBlipModalOpen = (label, quadrant, ring) => {
     setLabel(label);
@@ -87,6 +87,7 @@ function App() {
     setIsOpen(true);
   };
 
+  //uniq
   function radar_visualization(config) {
     // custom random number generator, to make random sequence reproducible
     // source: https://stackoverflow.com/questions/521295
@@ -226,8 +227,8 @@ function App() {
         segmented[quadrant][ring] = [];
       }
     }
-    for (var i = 0; i < config.entries.length; i++) {
-      var entry = config.entries[i];
+    for (let i = 0; i < config.entries.length; i++) {
+      const entry = config.entries[i];
       segmented[entry.quadrant][entry.ring].push(entry);
     }
 
@@ -275,7 +276,7 @@ function App() {
       .attr('height', config.height);
 
     var radar = svg.append('g');
-    if ('zoomed_quadrant' in config) {
+    if ('zoomed_quadrant' in config && config.zoomed_quadrant != null) {
       svg.attr('viewBox', viewbox(config.zoomed_quadrant));
     } else {
       radar.attr('transform', translate(config.width / 2, config.height / 2));
@@ -393,7 +394,7 @@ function App() {
             translate(legend_offset[quadrant].x, legend_offset[quadrant].y - 45)
           )
           .text(config.quadrants[quadrant].name)
-          .style('font-family', 'Arial, Helvetica')
+          .style('font-family', 'sans-serif, Arial')
           .style('font-size', '18px')
           .style('font-weight', 'bold');
         // eslint-disable-next-line
@@ -402,7 +403,7 @@ function App() {
             .append('text')
             .attr('transform', legend_transform(quadrant, ring))
             .text(config.rings[ring].name)
-            .style('font-family', 'Arial, Helvetica')
+            .style('font-family', 'sans-serif, Arial')
             .style('font-size', '12px')
             .style('font-weight', 'bold')
             .style('fill', config.rings[ring].color);
@@ -491,9 +492,8 @@ function App() {
       }
     }
 
-    function hideBubble(d) {
-      var bubble = d3
-        .select('#bubble')
+    function hideBubble() {
+      d3.select('#bubble')
         .attr('transform', translate(0, 0))
         .style('opacity', 0);
     }
@@ -588,19 +588,12 @@ function App() {
       .velocityDecay(0.19) // magic number (found by experimentation)
       .force('collision', d3.forceCollide().radius(12).strength(0.85))
       .on('tick', ticked);
-
-    //*/
   }
 
   const { status, data, error } = useGetAllEntries();
-
   const [modalIsOpen, setIsOpen] = useState(false);
   const [addTechnologyModalIsOpen, setAddTechnologyModalIsOpen] =
     useState(false);
-
-  const handleModalOpen = () => {
-    setIsOpen(true);
-  };
 
   const handleModalClose = () => {
     setIsOpen(false);
@@ -626,54 +619,11 @@ function App() {
   };
 
   useEffect(() => {
-    console.log('runnnbroo');
     if (status === 'success') {
-      console.log('data set');
       console.log(data);
       setBlips(data);
     }
   }, [status, data]);
-
-  const runVisualization2 = (mydata) => {
-    const newArray = mydata.map((item, i) => {
-      const newItem = {
-        ...item,
-        id: i,
-      };
-      return newItem;
-    });
-
-    radar_visualization({
-      svg_id: 'radar',
-      width: 1450,
-      height: 1000,
-      colors: {
-        background: '#fff',
-        grid: '#dddde0',
-        inactive: '#ddd',
-      },
-      title: 'BMW Group Tech Radar made by Atalay',
-      date: '2023.06',
-      quadrants: [
-        { name: 'Languages' },
-        { name: 'Infrastructure' },
-        { name: 'Datastores' },
-        { name: 'Frameworks and Libraries' },
-      ],
-      rings: [
-        { name: 'ADOPT', color: '#5ba300' },
-        { name: 'TRIAL', color: '#009eb0' },
-        { name: 'ASSESS', color: '#c7ba00' },
-        { name: 'HOLD', color: '#e09b96' },
-      ],
-      print_layout: true,
-      links_in_new_tabs: true,
-      // zoomed_quadrant: 0,
-      //ENTRIES
-      entries: newArray,
-      //ENTRIES
-    });
-  };
 
   useEffect(() => {
     const runVisualization = (mydata) => {
@@ -710,7 +660,7 @@ function App() {
         ],
         print_layout: true,
         links_in_new_tabs: true,
-        // zoomed_quadrant: 0,
+        //zoomed_quadrant: zoomed_quadrant,
         //ENTRIES
         entries: newArray,
         //ENTRIES
@@ -721,6 +671,44 @@ function App() {
 
     runVisualization(myBlips);
   }, [myBlips]);
+
+  const runVisualization2 = (mydata) => {
+    const newArray = mydata.map((item, i) => {
+      const newItem = {
+        ...item,
+        id: i,
+      };
+      return newItem;
+    });
+
+    radar_visualization({
+      svg_id: 'radar',
+      width: 1450,
+      height: 1000,
+      colors: {
+        background: '#fff',
+        grid: '#dddde0',
+        inactive: '#ddd',
+      },
+      title: 'BMW Group Tech Radar made by Atalay',
+      date: '2023.06',
+      quadrants: [
+        { name: 'Languages' },
+        { name: 'Infrastructure' },
+        { name: 'Datastores' },
+        { name: 'Frameworks and Libraries' },
+      ],
+      rings: [
+        { name: 'ADOPT', color: '#5ba300' },
+        { name: 'TRIAL', color: '#009eb0' },
+        { name: 'ASSESS', color: '#c7ba00' },
+        { name: 'HOLD', color: '#e09b96' },
+      ],
+      print_layout: true,
+      links_in_new_tabs: true,
+      entries: newArray,
+    });
+  };
 
   const addTechnology = (e) => {
     e.preventDefault();
@@ -737,7 +725,6 @@ function App() {
       },
     ];
     setBlips(tempBlips);
-    //setAddTechnologyModalIsOpen(false);
     setLabel('');
   };
 
@@ -754,8 +741,19 @@ function App() {
     runVisualizationEmpty();
   };
 
-  const saveCurrentBlips = () => {
+  const [dialogOnState, setDialogOnState] = useState(false);
+
+  const onAcceptClick = () => {
+    setDialogOnState(false);
     saveEntries();
+  };
+
+  const onCancelClick = () => {
+    setDialogOnState(false);
+  };
+
+  const onNavbarSaveClick = () => {
+    setDialogOnState(true);
   };
 
   const getTechRadarFromDb = () => {
@@ -825,6 +823,11 @@ function App() {
 
   return (
     <div className='App'>
+      <WarningDialog
+        dialogOnState={dialogOnState}
+        onAcceptClick={onAcceptClick}
+        onCancelClick={onCancelClick}
+      />
       <AddTechnologyModal
         showModal={addTechnologyModalIsOpen}
         handleModalClose={handleAddTechnologyModalClose}
@@ -851,7 +854,7 @@ function App() {
         handleAddTechnologyModalOpen={handleAddTechnologyModalOpen}
         resetTechRadar={resetTechRadar}
         getTechRadarFromDb={getTechRadarFromDb}
-        saveCurrentBlips={saveCurrentBlips}
+        onSaveClick={onNavbarSaveClick}
       />
       <svg className='pt-8' id='radar' ref={svgRef}></svg>
       <Description />
