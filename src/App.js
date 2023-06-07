@@ -744,6 +744,7 @@ function App() {
   const resetTechRadar = () => {
     cleanSvg();
     runVisualizationEmpty();
+    setBlips([]);
   };
 
   const [dialogOnState, setDialogOnState] = useState(false);
