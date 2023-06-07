@@ -40,7 +40,7 @@ const ringSelectElements = [
 ];
 
 const AddTechnologyModal = (props) => {
-  const { label, quadrant, ring, handleModalSubmit } = props;
+  const { handleModalSubmit } = props;
 
   if (props.showModal) {
     return (

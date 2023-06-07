@@ -113,10 +113,10 @@ function App() {
     ];
 
     const rings = [
-      { radius: 130 },
-      { radius: 220 },
-      { radius: 310 },
-      { radius: 400 },
+      { radius: 90 },
+      { radius: 150 },
+      { radius: 240 },
+      { radius: 330 },
     ];
 
     const title_offset = { x: -675, y: -420 };
@@ -124,10 +124,10 @@ function App() {
     const footer_offset = { x: -675, y: 420 };
 
     const legend_offset = [
-      { x: 450, y: 90 },
-      { x: -675, y: 90 },
-      { x: -675, y: -310 },
-      { x: 450, y: -310 },
+      { x: 400, y: 90 },
+      { x: -625, y: 90 },
+      { x: -625, y: -250 },
+      { x: 400, y: -250 },
     ];
 
     function polar(cartesian) {
@@ -287,16 +287,16 @@ function App() {
     grid
       .append('line')
       .attr('x1', 0)
-      .attr('y1', -400)
+      .attr('y1', -330)
       .attr('x2', 0)
-      .attr('y2', 400)
+      .attr('y2', 330)
       .style('stroke', config.colors.grid)
       .style('stroke-width', 1);
     grid
       .append('line')
-      .attr('x1', -400)
+      .attr('x1', -330)
       .attr('y1', 0)
-      .attr('x2', 400)
+      .attr('x2', 330)
       .attr('y2', 0)
       .style('stroke', config.colors.grid)
       .style('stroke-width', 1);
@@ -717,28 +717,10 @@ function App() {
       });
     };
 
-    console.log('possible invalidation');
-
-    console.log('fire 1');
     cleanSvg();
 
     runVisualization(myBlips);
   }, [myBlips]);
-
-  if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
-
-  if (status === 'error') {
-    return <div>{error.message}</div>;
-  }
-
-  const getTechRadarFromDb = () => {
-    queryClient.invalidateQueries('entries');
-    setBlips(data);
-    cleanSvg();
-    runVisualization2(data);
-  };
 
   const addTechnology = (e) => {
     e.preventDefault();
@@ -774,6 +756,13 @@ function App() {
 
   const saveCurrentBlips = () => {
     saveEntries();
+  };
+
+  const getTechRadarFromDb = () => {
+    queryClient.invalidateQueries('entries');
+    setBlips(data);
+    cleanSvg();
+    runVisualization2(data);
   };
 
   const onEditBlipModalSubmit = (e) => {
@@ -826,16 +815,16 @@ function App() {
     setRing(e.target.value);
   };
 
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
+
+  if (status === 'error') {
+    return <div>{error.message}</div>;
+  }
+
   return (
     <div className='App'>
-      <button
-        onClick={() => {
-          console.log('this is test');
-          console.log(myBlips);
-        }}
-      >
-        TEST
-      </button>
       <AddTechnologyModal
         showModal={addTechnologyModalIsOpen}
         handleModalClose={handleAddTechnologyModalClose}
