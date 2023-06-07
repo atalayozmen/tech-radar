@@ -15,7 +15,9 @@ function useGetAllEntries() {
   return useQuery(
     'entries',
     async () => {
-      const { data } = await axios.get('http://localhost:5000/');
+      const { data } = await axios.get(
+        'https://expressjs-prisma-production-53f4.up.railway.app/'
+      );
       return data;
     },
     { refetchOnWindowFocus: false }
@@ -609,7 +611,10 @@ function App() {
 
   function saveEntries() {
     console.log('save entries');
-    axios.put('http://localhost:5000/saveEntries', myBlips);
+    axios.put(
+      'https://expressjs-prisma-production-53f4.up.railway.app/saveEntries',
+      myBlips
+    );
   }
 
   const svgRef = useRef();
