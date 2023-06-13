@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import ModalComponent from './components/ModalComponent';
 import AddTechnologyModal from './components/AddTechnologyModal';
 import WarningDialog from './components/WarningDialog';
+import useWindowDimensions from './components/useWindowDimensions';
 
 function useGetAllEntries() {
   return useQuery(
@@ -26,10 +27,11 @@ function useGetAllEntries() {
 
 function App() {
   const queryClient = useQueryClient();
+  const { height, width } = useWindowDimensions();
   const runVisualizationEmpty = () => {
     radar_visualization({
       svg_id: 'radar',
-      width: 1450,
+      width: width,
       height: 1000,
       colors: {
         background: '#fff',
@@ -62,7 +64,6 @@ function App() {
   const [quadrant, setQuadrant] = useState(null);
   const [ring, setRing] = useState(null);
   const [myBlips, setBlips] = useState([]);
-  const [zoomed_quadrant, setZoomedQuadrant] = useState(null);
 
   const handleBlipModalOpen = (label, quadrant, ring) => {
     setLabel(label);
@@ -71,17 +72,8 @@ function App() {
   };
 
   const onBlipClick = (blipLabel) => {
-    console.log('blip id is');
-    console.log(blipLabel);
-    console.log('myblips');
-    console.log(myBlips);
-
     const tempBlips = myBlips.slice();
-    console.log('tempblips');
-    console.log(tempBlips);
-
     const blipIndex = tempBlips.findIndex((blip) => blip.label === blipLabel);
-
     const blipFound = tempBlips[blipIndex];
 
     const { label, quadrant, ring } = blipFound;
@@ -115,23 +107,90 @@ function App() {
       { radial_min: -0.5, radial_max: 0, factor_x: 1, factor_y: -1 },
     ];
 
-    const rings = [
-      { radius: 90 },
-      { radius: 150 },
-      { radius: 240 },
-      { radius: 330 },
-    ];
+    let rings;
 
-    const title_offset = { x: -675, y: -420 };
+    let maxRadius = 0;
+
+    if (config.width > 720) {
+      rings = [
+        { radius: 90 },
+        { radius: 150 },
+        { radius: 240 },
+        { radius: 330 },
+      ];
+      maxRadius = 330;
+    } else {
+      rings = [
+        { radius: 60 },
+        { radius: 100 },
+        { radius: 140 },
+        { radius: 180 },
+      ];
+      maxRadius = 180;
+    }
 
     const footer_offset = { x: -675, y: 420 };
 
-    const legend_offset = [
-      { x: 400, y: 90 },
-      { x: -625, y: 90 },
-      { x: -625, y: -250 },
-      { x: 400, y: -250 },
-    ];
+    let legend_offset;
+
+    if (config.width > 1200) {
+      legend_offset = [
+        {
+          x: maxRadius + 20,
+          y: 90,
+        }, //LANGUAGES
+        {
+          x: -maxRadius - 250,
+          y: 90,
+        }, //INFRASTRUCTURE
+        {
+          x: -maxRadius - 250,
+          y: -250,
+        }, //DATASTORES
+        {
+          x: maxRadius + 20,
+          y: -250,
+        }, //FRAMEWORKS AND LIBRARIES
+      ];
+    } else if (config.width > 720) {
+      legend_offset = [
+        {
+          x: config.width / 8 - 40,
+          y: config.height / 4 - 350 + 2 * maxRadius,
+        }, //LANGUAGES
+        {
+          x: -config.width / 8 - maxRadius - 20 + 200,
+          y: -config.height / 4 - 10 + 2 * maxRadius - 150,
+        }, //INFRASTRUCTURE
+        {
+          x: -config.width / 8 - maxRadius - 20 + 200,
+          y: -config.height / 4 + maxRadius - 50,
+        }, //DATASTORES
+        {
+          x: config.width / 8 - 40,
+          y: -config.height / 4 + maxRadius - 100,
+        }, //FRAMEWORKS AND LIBRARIES
+      ];
+    } else {
+      legend_offset = [
+        {
+          x: -100,
+          y: 0,
+        }, //LANGUAGES
+        {
+          x: -100,
+          y: 0,
+        }, //INFRASTRUCTURE
+        {
+          x: -100,
+          y: 0,
+        }, //DATASTORES
+        {
+          x: -100,
+          y: 0,
+        }, //FRAMEWORKS AND LIBRARIES
+      ];
+    }
 
     function polar(cartesian) {
       var x = cartesian.x;
@@ -284,25 +343,50 @@ function App() {
       radar.attr('transform', translate(config.width / 2, config.height / 2));
     }
 
-    var grid = radar.append('g');
-
+    var grid = radar.append('g').attr('id', 'grid');
     // draw grid lines
-    grid
-      .append('line')
-      .attr('x1', 0)
-      .attr('y1', -330)
-      .attr('x2', 0)
-      .attr('y2', 330)
-      .style('stroke', config.colors.grid)
-      .style('stroke-width', 1);
-    grid
-      .append('line')
-      .attr('x1', -330)
-      .attr('y1', 0)
-      .attr('x2', 330)
-      .attr('y2', 0)
-      .style('stroke', config.colors.grid)
-      .style('stroke-width', 1);
+
+    if (config.width > 720) {
+      grid
+        .append('line')
+        .attr('x1', 0)
+        .attr('y1', -330)
+        .attr('x2', 0)
+        .attr('y2', 330)
+        .style('stroke', config.colors.grid)
+        .style('stroke-width', 1);
+      grid
+        .append('line')
+        .attr('x1', -330)
+        .attr('y1', 0)
+        .attr('x2', 330)
+        .attr('y2', 0)
+        .style('stroke', config.colors.grid)
+        .style('stroke-width', 1);
+    } else {
+      grid
+        .append('line')
+        .attr('x1', 0)
+        .attr('y1', -180)
+        .attr('x2', 0)
+        .attr('y2', 180)
+        .style('stroke', config.colors.grid)
+        .style('stroke-width', 1);
+      grid
+        .append('line')
+        .attr('x1', -180)
+        .attr('y1', 0)
+        .attr('x2', 180)
+        .attr('y2', 0)
+        .style('stroke', config.colors.grid)
+        .style('stroke-width', 1);
+    }
+
+    if (config.width <= 720) {
+      grid.attr('transform', translate(0, -300));
+    } else {
+      grid.attr('transform', translate(0, -150));
+    }
 
     // background color. Usage `.attr("filter", "url(#solid)")`
     // SOURCE: https://stackoverflow.com/a/31013492/2609980
@@ -359,37 +443,14 @@ function App() {
     // draw title and legend (only in print layout)
     if (config.print_layout) {
       // title
-      radar
-        .append('text')
-        .attr('transform', translate(title_offset.x, title_offset.y))
-        .text(config.title)
-        .style('font-family', 'Arial, Helvetica')
-        .style('font-size', '30')
-        .style('font-weight', 'bold');
-
-      // date
-      radar
-        .append('text')
-        .attr('transform', translate(title_offset.x, title_offset.y + 20))
-        .text(config.date || '')
-        .style('font-family', 'Arial, Helvetica')
-        .style('font-size', '14')
-        .style('fill', '#999');
-
-      // footer
-      radar
-        .append('text')
-        .attr('transform', translate(footer_offset.x, footer_offset.y))
-        .text('▲ moved up     ▼ moved down')
-        .attr('xml:space', 'preserve')
-        .style('font-family', 'Arial, Helvetica')
-        .style('font-size', '10px');
 
       // legend
       var legend = radar.append('g');
       // eslint-disable-next-line
       for (var quadrant = 0; quadrant < 4; quadrant++) {
         legend
+          .append('g')
+          .attr('id', 'quadrant-' + quadrant)
           .append('text')
           .attr(
             'transform',
@@ -400,8 +461,9 @@ function App() {
           .style('font-size', '18px')
           .style('font-weight', 'bold');
         // eslint-disable-next-line
+        const legendQuadrant = legend.select('#quadrant-' + quadrant);
         for (var ring = 0; ring < 4; ring++) {
-          legend
+          legendQuadrant
             .append('text')
             .attr('transform', legend_transform(quadrant, ring))
             .text(config.rings[ring].name)
@@ -409,7 +471,7 @@ function App() {
             .style('font-size', '12px')
             .style('font-weight', 'bold')
             .style('fill', config.rings[ring].color);
-          legend
+          legendQuadrant
             .selectAll('.legend' + quadrant + ring)
             .data(segmented[quadrant][ring])
             .enter()
@@ -417,6 +479,7 @@ function App() {
             .attr('href', function (d, i) {
               return d.link ? d.link : '#'; // stay on same page if no link was provided
             })
+
             // Add a target if (and only if) there is a link and we want new tabs
             .attr('target', function (d, i) {
               return d.link && config.links_in_new_tabs ? '_blank' : null;
@@ -444,7 +507,19 @@ function App() {
     }
 
     // layer for entries
-    var rink = radar.append('g').attr('id', 'rink');
+    var rink;
+
+    if (config.width <= 720) {
+      rink = radar
+        .append('g')
+        .attr('id', 'rink')
+        .attr('transform', translate(0, -300));
+    } else {
+      rink = radar
+        .append('g')
+        .attr('id', 'rink')
+        .attr('transform', translate(0, -150));
+    }
 
     // rollover bubble (on top of everything else)
     var bubble = radar
@@ -466,22 +541,35 @@ function App() {
     // eslint-disable-next-line
     function showBubble(d) {
       if (d.active || config.print_layout) {
-        console.log('lmaoooooo');
         console.log(d);
         console.log(d.srcElement.__data__.label);
         var tooltip = d3
           .select('#bubble text')
           .text(d.srcElement.__data__.label);
         var bbox = tooltip.node().getBBox();
-        d3.select('#bubble')
-          .attr(
-            'transform',
-            translate(
-              d.srcElement.__data__.x - bbox.width / 2,
-              d.srcElement.__data__.y - 16
+
+        if (config.width <= 720) {
+          d3.select('#bubble')
+            .attr(
+              'transform',
+              translate(
+                d.srcElement.__data__.x - bbox.width / 2,
+                d.srcElement.__data__.y - 16 - 300
+              )
             )
-          )
-          .style('opacity', 0.8);
+            .style('opacity', 0.8);
+        } else {
+          d3.select('#bubble')
+            .attr(
+              'transform',
+              translate(
+                d.srcElement.__data__.x - bbox.width / 2,
+                d.srcElement.__data__.y - 16 - 150
+              )
+            )
+            .style('opacity', 0.8);
+        }
+
         d3.select('#bubble rect')
           .attr('x', -5)
           .attr('y', -bbox.height)
@@ -584,6 +672,54 @@ function App() {
       });
     }
 
+    let translationOffset = 0;
+
+    let max = 0;
+
+    if (config.width <= 720) {
+      for (i = 0; i < 4; i++) {
+        let selected = d3
+          .select('#quadrant-' + i)
+          .attr('transform', translate(0, translationOffset));
+        console.log('selected');
+        console.log(selected);
+        if (selected.node() != null) {
+          translationOffset += selected.node().getBBox().height + 40;
+        }
+      }
+
+      if (d3.select('#grid').node() != null) {
+        const gridHeight = d3.select('#grid').node().getBBox().height;
+
+        d3.select('svg#' + config.svg_id).attr(
+          'height',
+          config.height + translationOffset + gridHeight - 900
+        );
+      }
+    } else if (config.width > 720 && config.width <= 1200) {
+      for (i = 0; i < 4; i++) {
+        let selected = d3
+          .select('#quadrant-' + i)
+          .attr('transform', translate(0, translationOffset));
+        if (selected.node() != null) {
+          if (selected.node().getBBox().height > max)
+            translationOffset = 2 * selected.node().getBBox().height + 40;
+        }
+      }
+
+      if (d3.select('#grid').node() != null) {
+        const gridHeight = d3.select('#grid').node().getBBox().height;
+        d3.select('svg#' + config.svg_id).attr(
+          'height',
+          config.height +
+            translationOffset +
+            gridHeight -
+            translationOffset -
+            300
+        );
+      }
+    }
+
     // distribute blips, while avoiding collisions
     d3.forceSimulation()
       .nodes(config.entries)
@@ -639,10 +775,11 @@ function App() {
         };
         return newItem;
       });
+      console.log(window);
 
       radar_visualization({
         svg_id: 'radar',
-        width: 1450,
+        width: width,
         height: 1000,
         colors: {
           background: '#fff',
@@ -675,7 +812,7 @@ function App() {
     cleanSvg();
 
     runVisualization(myBlips);
-  }, [myBlips]);
+  }, [myBlips, width, height]);
 
   const runVisualization2 = (mydata) => {
     const newArray = mydata.map((item, i) => {
@@ -688,7 +825,7 @@ function App() {
 
     radar_visualization({
       svg_id: 'radar',
-      width: 1450,
+      width: width,
       height: 1000,
       colors: {
         background: '#fff',
@@ -862,7 +999,9 @@ function App() {
         getTechRadarFromDb={getTechRadarFromDb}
         onSaveClick={onNavbarSaveClick}
       />
-      <svg className='pt-8' id='radar' ref={svgRef}></svg>
+
+      <h1 className='pt-40 font-bold'> BMW Tech Radar by Atalay Özmen</h1>
+      <svg className='pt-8 ' id='radar' ref={svgRef}></svg>
       <Description />
     </div>
   );
